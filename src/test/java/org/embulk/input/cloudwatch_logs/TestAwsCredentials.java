@@ -48,7 +48,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class TestCloudwatchLogsInputPlugin
+public class TestAwsCredentials
 {
     @Rule
     public EmbulkTestRuntime runtime = new EmbulkTestRuntime();
@@ -100,33 +100,77 @@ public class TestCloudwatchLogsInputPlugin
                     .set("log_group_name", EMBULK_LOGS_TEST_GROUP_NAME)
                     .set("log_stream_name", EMBULK_LOGS_TEST_STREAM_NAME)
                     .set("use_log_stream_name_prefix", "true")
-                    .set("region", EMBULK_LOGS_TEST_REGION)
-                    .set("aws_access_key_id", EMBULK_LOGS_TEST_ACCESS_KEY_ID)
-                    .set("aws_secret_access_key", EMBULK_LOGS_TEST_SECRET_ACCESS_KEY);
+                    .set("region", EMBULK_LOGS_TEST_REGION);
             pageBuilder = Mockito.mock(PageBuilder.class);
-        }
         doReturn(pageBuilder).when(plugin).getPageBuilder(Mockito.any(), Mockito.any());
+        }
     }
 
-    @Test
-    public void test_simple() throws IOException
+    private void doTest(ConfigSource config) throws IOException
     {
         plugin.transaction(config, new Control());
         verify(pageBuilder, times(1)).finish();
     }
 
     @Test
-    public void configuredRegion()
+    public void useBasic() throws IOException
     {
-        CloudWatchLogsPluginTask task = this.config.deepCopy()
-                .set("region", "ap-southeast-2")
-                .remove("endpoint")
-                .loadConfig(CloudWatchLogsPluginTask.class);
-        CloudwatchLogsInputPlugin plugin = runtime.getInstance(CloudwatchLogsInputPlugin.class);
-        AWSLogs logsClient = plugin.newLogsClient(task);
+        ConfigSource config = this.config.deepCopy()
+                .set("authentication_method", "basic")
+                .set("aws_access_key_id", EMBULK_LOGS_TEST_ACCESS_KEY_ID)
+                .set("aws_secret_access_key", EMBULK_LOGS_TEST_SECRET_ACCESS_KEY);
+        doTest(config);
+    }
 
-        // Should not be null
-        assumeNotNull(logsClient);
+    @Test
+    public void useEnv()
+    {
+        // TODO
+    }
+
+    @Test
+    public void useInstance()
+    {
+        // TODO
+    }
+
+    @Test
+    public void useProfile()
+    {
+        // TODO
+    }
+
+    @Test
+    public void useProperties() throws IOException
+    {
+        String prevAccessKeyId = System.getProperty("aws.accessKeyId");
+        String prevSecretKey = System.getProperty("aws.secretKey");
+        try {
+            ConfigSource config = this.config.deepCopy().set("authentication_method", "properties");
+            System.setProperty("aws.accessKeyId", EMBULK_LOGS_TEST_ACCESS_KEY_ID);
+            System.setProperty("aws.secretKey", EMBULK_LOGS_TEST_SECRET_ACCESS_KEY);
+            doTest(config);
+        }
+        finally {
+            if (prevAccessKeyId != null) {
+                System.setProperty("aws.accessKeyId", prevAccessKeyId);
+            }
+            if (prevSecretKey != null) {
+                System.setProperty("aws.secretKey", prevSecretKey);
+            }
+        }
+    }
+
+    @Test
+    public void useAnonymous()
+    {
+        // TODO
+    }
+
+    @Test
+    public void useSession()
+    {
+        //TODO
     }
 
     private class Control implements InputPlugin.Control

@@ -19,15 +19,30 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 dependencies {
-    compile  "org.embulk:embulk-core:0.9.22"
-    provided "org.embulk:embulk-core:0.9.22"
+    compile  "org.embulk:embulk-core:0.9.21"
+    provided "org.embulk:embulk-core:0.9.21"
     compile group: 'com.amazonaws', name: 'aws-java-sdk-logs', version: '1.11.749'
     compile group: 'com.amazonaws', name: 'aws-java-sdk-sts', version: '1.11.749'
     // compile "YOUR_JAR_DEPENDENCY_GROUP:YOUR_JAR_DEPENDENCY_MODULE:YOUR_JAR_DEPENDENCY_VERSION"
     testCompile "junit:junit:4.+"
     testCompile "org.mockito:mockito-core:1.+"
-    testCompile "org.embulk:embulk-core:0.9.22:tests"
-    testCompile "org.embulk:embulk-standards:0.9.22"
+    testCompile "org.embulk:embulk-core:0.9.21:tests"
+    testCompile "org.embulk:embulk-standards:0.9.21"
+    testCompile "org.embulk:embulk-test:0.9.21"
+}
+
+// add tests/javadoc/source jar tasks as artifacts to be released
+task testsJar(type: Jar, dependsOn: classes) {
+    classifier = 'tests'
+    from sourceSets.test.output
+}
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
 }
 
 task classpath(type: Copy, dependsOn: ["jar"]) {
@@ -72,6 +87,10 @@ task "package"(dependsOn: ["gemspec", "classpath"]) {
         println "> Build succeeded."
         println "> You can run embulk with '-L ${file(".").absolutePath}' argument."
     }
+}
+
+artifacts {
+    archives testsJar, sourcesJar, javadocJar
 }
 
 task gemspec {
