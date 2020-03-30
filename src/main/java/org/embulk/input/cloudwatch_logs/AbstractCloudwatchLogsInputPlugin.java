@@ -1,6 +1,8 @@
 package org.embulk.input.cloudwatch_logs;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import com.google.common.base.Optional;
@@ -42,10 +44,13 @@ import com.amazonaws.services.logs.model.OutputLogEvent;
 
 import org.embulk.input.cloudwatch_logs.aws.AwsCredentials;
 import org.embulk.input.cloudwatch_logs.aws.AwsCredentialsTask;
+import org.embulk.input.cloudwatch_logs.utils.DateUtils;
 
 public abstract class AbstractCloudwatchLogsInputPlugin
         implements InputPlugin
 {
+    private static final String DEFAULT_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
+
     public interface PluginTask
             extends AwsCredentialsTask, Task
     {
@@ -90,6 +95,21 @@ public abstract class AbstractCloudwatchLogsInputPlugin
                 .add(task.getColumnName(), Types.STRING)
                 .build();
         int taskCount = 1;  // number of run() method calls
+        String time_range_format = DEFAULT_DATE_FORMAT;
+        if (task.getTimeRangeFormat().isPresent()) {
+            time_range_format = task.getTimeRangeFormat().get();
+        }
+        if (task.getStartTime().isPresent() && task.getEndTime().isPresent()) {
+            Date startTime = DateUtils.parseDateStr(task.getStartTime().get(),
+                                                    Collections.singletonList(time_range_format));
+            Date endTime = DateUtils.parseDateStr(task.getEndTime().get(),
+                                                  Collections.singletonList(time_range_format));
+            if (endTime.before(startTime)) {
+                throw new ConfigException(String.format("endTime(%s) must not be earlier than startTime(%s).",
+                                                        task.getEndTime().get(),
+                                                        task.getStartTime().get()));
+            }
+        }
 
         return resume(task.dump(), schema, taskCount, control);
     }
@@ -238,6 +258,20 @@ public abstract class AbstractCloudwatchLogsInputPlugin
                 GetLogEventsRequest request = new GetLogEventsRequest()
                         .withLogGroupName(logGroupName)
                         .withLogStreamName(logStreamName);
+                String time_range_format = DEFAULT_DATE_FORMAT;
+                if (task.getTimeRangeFormat().isPresent()) {
+                    time_range_format = task.getTimeRangeFormat().get();
+                }
+                if (task.getStartTime().isPresent()) {
+                    String startTimeStr = task.getStartTime().get();
+                    Date startTime = DateUtils.parseDateStr(startTimeStr, Collections.singletonList(time_range_format));
+                    request.setStartTime(startTime.getTime());
+                }
+                if (task.getEndTime().isPresent()) {
+                    String endTimeStr = task.getEndTime().get();
+                    Date endTime = DateUtils.parseDateStr(endTimeStr, Collections.singletonList(time_range_format));
+                    request.setEndTime(endTime.getTime());
+                }
                 if (nextToken != null) {
                     request.setNextToken(nextToken);
                 }

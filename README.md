@@ -1,7 +1,5 @@
 # Cloudwatch Logs input plugin for Embulk
 
-TODO: Write short description here and build.gradle file.
-
 ## Overview
 
 * **Plugin type**: input
@@ -18,6 +16,12 @@ TODO: Write short description here and build.gradle file.
 - **use_log_stream_name_prefix**: Whether using **log_stream_name** as stream name prefix (boolean, default: `false`)
 
 - **column_name**: Column name for CloudWatchLogs' message column (string, default: `"message"`)
+
+- **start_time**: CloudWatchLogs start-time (string, optional, default: `null`)
+
+- **end_time**: CloudWatchLogs end-time (string, optional, default: `null`)
+
+- **time_range_format**: Time range format. Internally, it will be used as `yyyy-MM-dd HH:mm:ss` by default. (string, optional, default: `null`)
 
 - **region** CloudWatchLogs region. Currently this should be required. (string, optional)
 
@@ -78,6 +82,18 @@ in:
   region: ap-northeast-1
   aws_access_key_id: ABCXYZ123ABCXYZ123
   aws_secret_access_key: AbCxYz123aBcXyZ123
+```
+
+Specifying time range is also supported.
+`start_time` and `end_time` are corresponds to `startTime` and `endTime` in GetLogEvents request.
+They are handled as number of milliseconds after Jan 1, 1970 00:00:00 UTC.
+
+ref: https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_GetLogEvents.html#API_GetLogEvents_RequestSyntax
+
+```yaml
+  start_time: 2020-01-18 00:00:00Z
+  end_time: 2020-03-20 00:00:00Z
+  time_range_format: "YY-MM-dd HH:mm:ss'Z'"
 ```
 
 To use `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables:
