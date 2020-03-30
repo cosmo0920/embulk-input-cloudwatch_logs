@@ -3,6 +3,7 @@
 /tmp/
 .DS_Store
 config.yaml
+*.sh
 *.gemspec
 .gradle/
 /classpath/
