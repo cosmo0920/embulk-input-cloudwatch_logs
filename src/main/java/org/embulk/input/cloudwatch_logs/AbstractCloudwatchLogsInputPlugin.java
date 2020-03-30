@@ -1,15 +1,16 @@
 package org.embulk.input.cloudwatch_logs;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Optional;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import com.google.common.base.Optional;
-import com.google.common.annotations.VisibleForTesting;
-
 import org.embulk.config.Config;
 import org.embulk.config.ConfigDefault;
+
 import org.embulk.config.ConfigDiff;
 import org.embulk.config.ConfigException;
 import org.embulk.config.ConfigSource;
@@ -21,25 +22,21 @@ import org.embulk.spi.InputPlugin;
 import org.embulk.spi.PageBuilder;
 import org.embulk.spi.PageOutput;
 import org.embulk.spi.Schema;
-import org.embulk.spi.SchemaConfig;
 import org.embulk.spi.time.Timestamp;
 import org.embulk.spi.type.Types;
-import org.embulk.spi.util.RetryExecutor;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.ClientConfiguration;
-import com.amazonaws.Protocol;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.retry.PredefinedRetryPolicies;
 
-import com.amazonaws.services.logs.AWSLogsClient;
-import com.amazonaws.services.logs.AWSLogsClientBuilder;
 import com.amazonaws.services.logs.AWSLogs;
+import com.amazonaws.services.logs.AWSLogsClientBuilder;
 import com.amazonaws.services.logs.model.DescribeLogStreamsRequest;
 import com.amazonaws.services.logs.model.DescribeLogStreamsResult;
-import com.amazonaws.services.logs.model.LogStream;
 import com.amazonaws.services.logs.model.GetLogEventsRequest;
 import com.amazonaws.services.logs.model.GetLogEventsResult;
+import com.amazonaws.services.logs.model.LogStream;
 import com.amazonaws.services.logs.model.OutputLogEvent;
 
 import org.embulk.input.cloudwatch_logs.aws.AwsCredentials;

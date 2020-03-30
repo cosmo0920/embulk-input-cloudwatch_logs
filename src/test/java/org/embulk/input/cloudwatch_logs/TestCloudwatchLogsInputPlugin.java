@@ -1,27 +1,15 @@
 package org.embulk.input.cloudwatch_logs;
 
-import com.amazonaws.services.logs.AWSLogsClient;
-import com.amazonaws.services.logs.AWSLogsClientBuilder;
 import com.amazonaws.services.logs.AWSLogs;
-import com.amazonaws.services.logs.model.DescribeLogStreamsRequest;
-import com.amazonaws.services.logs.model.DescribeLogStreamsResult;
-import com.amazonaws.services.logs.model.LogStream;
-import com.amazonaws.services.logs.model.GetLogEventsRequest;
-import com.amazonaws.services.logs.model.GetLogEventsResult;
-import com.amazonaws.services.logs.model.OutputLogEvent;
 
 import org.embulk.EmbulkTestRuntime;
-import org.embulk.config.ConfigDiff;
 import org.embulk.config.ConfigSource;
 import org.embulk.config.TaskReport;
 import org.embulk.config.TaskSource;
 import org.embulk.spi.InputPlugin;
 import org.embulk.spi.PageBuilder;
-import org.embulk.spi.PageOutput;
 import org.embulk.spi.Schema;
 import org.embulk.spi.TestPageBuilderReader.MockPageOutput;
-import org.embulk.spi.util.Pages;
-import org.embulk.test.EmbulkTests;
 import org.embulk.test.TestingEmbulk;
 
 import org.junit.Before;
@@ -29,24 +17,16 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.mockito.Spy;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.embulk.input.cloudwatch_logs.CloudwatchLogsInputPlugin;
 
 import static org.embulk.input.cloudwatch_logs.CloudwatchLogsInputPlugin.CloudWatchLogsPluginTask;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assume.assumeNotNull;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class TestCloudwatchLogsInputPlugin
 {

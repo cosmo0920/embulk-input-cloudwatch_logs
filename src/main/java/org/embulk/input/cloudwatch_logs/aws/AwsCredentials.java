@@ -14,7 +14,6 @@ import com.amazonaws.auth.SystemPropertiesCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.auth.profile.ProfilesConfigFile;
 import org.embulk.config.ConfigException;
-import org.embulk.spi.Exec;
 import org.slf4j.Logger;
 
 import java.util.Optional;
