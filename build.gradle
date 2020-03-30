@@ -20,16 +20,20 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 dependencies {
-    compile  "org.embulk:embulk-core:0.9.21"
-    provided "org.embulk:embulk-core:0.9.21"
+    compile  "org.embulk:embulk-core:0.10.1"
+    provided "org.embulk:embulk-core:0.10.1"
+    implementation "com.google.guava:guava:28.2-jre"
+    compile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.30'
     compile group: 'com.amazonaws', name: 'aws-java-sdk-logs', version: '1.11.749'
     compile group: 'com.amazonaws', name: 'aws-java-sdk-sts', version: '1.11.749'
     // compile "YOUR_JAR_DEPENDENCY_GROUP:YOUR_JAR_DEPENDENCY_MODULE:YOUR_JAR_DEPENDENCY_VERSION"
     testCompile "junit:junit:4.+"
     testCompile "org.mockito:mockito-core:1.+"
-    testCompile "org.embulk:embulk-core:0.9.21:tests"
-    testCompile "org.embulk:embulk-standards:0.9.21"
-    testCompile "org.embulk:embulk-test:0.9.21"
+    testCompile "org.embulk:embulk-core:0.10.1:tests"
+    testCompile "org.embulk:embulk-standards:0.10.1"
+    testCompile "org.embulk:embulk-junit4:0.10.1"
+    testCompile "org.embulk:embulk-deps-buffer:0.10.1"
+    testCompile "org.embulk:embulk-deps-config:0.10.1"
 }
 
 // add tests/javadoc/source jar tasks as artifacts to be released
