@@ -1,12 +1,7 @@
 package org.embulk.input.cloudwatch_logs;
 
 import com.amazonaws.services.logs.AWSLogs;
-import com.amazonaws.services.logs.model.CreateLogGroupRequest;
-import com.amazonaws.services.logs.model.CreateLogStreamRequest;
-import com.amazonaws.services.logs.model.DeleteLogGroupRequest;
 import com.amazonaws.services.logs.model.InputLogEvent;
-import com.amazonaws.services.logs.model.PutLogEventsRequest;
-import com.amazonaws.services.logs.model.ResourceNotFoundException;
 
 import org.embulk.EmbulkTestRuntime;
 import org.embulk.config.ConfigSource;
@@ -31,6 +26,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.embulk.input.cloudwatch_logs.TestHelpers;
+import org.embulk.input.cloudwatch_logs.TestHelpers.CloudWatchLogsTestUtils;
 
 import static org.embulk.input.cloudwatch_logs.CloudwatchLogsInputPlugin.CloudWatchLogsPluginTask;
 import static org.junit.Assume.assumeNotNull;
@@ -56,6 +52,7 @@ public class TestAwsCredentials
     private String logGroupName;
     private String logStreamName;
     private AWSLogs logsClient;
+    private CloudWatchLogsTestUtils testUtils;
 
     private static String EMBULK_LOGS_TEST_REGION;
     private static String EMBULK_LOGS_TEST_ACCESS_KEY_ID;
@@ -98,34 +95,9 @@ public class TestAwsCredentials
     @After
     public void tearDown() throws IOException
     {
-        if (logsClient != null && logGroupName != null) {
-            DeleteLogGroupRequest request = new DeleteLogGroupRequest();
-            request.setLogGroupName(logGroupName);
-            try {
-                logsClient.deleteLogGroup(request);
-            } catch (ResourceNotFoundException ex) {
-                // Just ignored.
-            }
+        if (testUtils != null) {
+            testUtils.clearLogGroup();
         }
-    }
-
-    private void createLogStream() {
-        CreateLogGroupRequest groupRequest = new CreateLogGroupRequest();
-        groupRequest.setLogGroupName(logGroupName);
-        logsClient.createLogGroup(groupRequest);
-
-        CreateLogStreamRequest streamRequest = new CreateLogStreamRequest();
-        streamRequest.setLogGroupName(logGroupName);
-        streamRequest.setLogStreamName(logStreamName);
-        logsClient.createLogStream(streamRequest);
-    }
-
-    private void putLogEvents(List<InputLogEvent> events) {
-        PutLogEventsRequest request = new PutLogEventsRequest()
-                .withLogGroupName(logGroupName)
-                .withLogStreamName(logStreamName)
-                .withLogEvents(events);
-        logsClient.putLogEvents(request);
     }
 
     private void doTest(ConfigSource config) throws IOException
@@ -133,8 +105,9 @@ public class TestAwsCredentials
         CloudWatchLogsPluginTask task = config.loadConfig(CloudWatchLogsPluginTask.class);
         CloudwatchLogsInputPlugin plugin = runtime.getInstance(CloudwatchLogsInputPlugin.class);
         logsClient = plugin.newLogsClient(task);
+        testUtils = new CloudWatchLogsTestUtils(logsClient, logGroupName, logStreamName);
 
-        createLogStream();
+        testUtils.createLogStream();
 
         List<InputLogEvent> events = new ArrayList<>();
         Date d = new Date();
@@ -144,7 +117,7 @@ public class TestAwsCredentials
             event.setMessage(String.format("CloudWatchLogs from Embulk take %d", i));
             events.add(event);
         }
-        putLogEvents(events);
+        testUtils.putLogEvents(events);
         try {
             Thread.sleep(10000);
         } catch (InterruptedException e) {
