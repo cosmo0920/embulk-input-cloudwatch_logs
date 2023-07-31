@@ -140,19 +140,10 @@ public abstract class AbstractCloudwatchLogsInputPlugin
         if (task.getUseLogStreamNamePrefix()) {
             List<LogStream> defaultLogStream = new ArrayList<LogStream>();
             List<LogStream> logStreams = drainer.describeLogStreams(defaultLogStream, null);
-            String nextToken = null;
             try (final PageBuilder pageBuilder = getPageBuilder(schema, output)) {
                 for (LogStream stream : logStreams) {
                     String logStreamName = stream.getLogStreamName();
-                    GetLogEventsResult result = drainer.getEvents(logStreamName, nextToken);
-                    List<OutputLogEvent> events = result.getEvents();
-                    for (OutputLogEvent event : events) {
-                        pageBuilder.setTimestamp(0, Timestamp.ofEpochMilli(event.getTimestamp()));
-                        pageBuilder.setString(1, event.getMessage());
-
-                        pageBuilder.addRecord();
-                    }
-                    nextToken = result.getNextForwardToken();
+                    addRecords(drainer, pageBuilder, logStreamName);
                 }
 
                 pageBuilder.finish();
@@ -164,20 +155,33 @@ public abstract class AbstractCloudwatchLogsInputPlugin
                 if (task.getLogStreamName().isPresent()) {
                     logStreamName = task.getLogStreamName().get();
                 }
-                GetLogEventsResult result = drainer.getEvents(logStreamName, null);
-                List<OutputLogEvent> events = result.getEvents();
-                for (OutputLogEvent event : events) {
-                    pageBuilder.setTimestamp(0, Timestamp.ofEpochMilli(event.getTimestamp()));
-                    pageBuilder.setString(1, event.getMessage());
-
-                    pageBuilder.addRecord();
-                }
+                addRecords(drainer, pageBuilder, logStreamName);
 
                 pageBuilder.finish();
             }
         }
 
         return Exec.newTaskReport();
+    }
+
+    private void addRecords(CloudWatchLogsDrainer drainer, PageBuilder pageBuilder, String logStreamName)
+    {
+        String nextToken = null;
+        while (true) {
+            GetLogEventsResult result = drainer.getEvents(logStreamName, nextToken);
+            List<OutputLogEvent> events = result.getEvents();
+            for (OutputLogEvent event : events) {
+                pageBuilder.setTimestamp(0, Timestamp.ofEpochMilli(event.getTimestamp()));
+                pageBuilder.setString(1, event.getMessage());
+
+                pageBuilder.addRecord();
+            }
+            String nextForwardToken = result.getNextForwardToken();
+            if (nextForwardToken == null || nextForwardToken.equals(nextToken)) {
+                break;
+            }
+            nextToken = nextForwardToken;
+        }
     }
 
     /**
@@ -254,7 +258,8 @@ public abstract class AbstractCloudwatchLogsInputPlugin
                 String logGroupName = task.getLogGroupName();
                 GetLogEventsRequest request = new GetLogEventsRequest()
                         .withLogGroupName(logGroupName)
-                        .withLogStreamName(logStreamName);
+                        .withLogStreamName(logStreamName)
+                        .withStartFromHead(true);
                 String time_range_format = DEFAULT_DATE_FORMAT;
                 if (task.getTimeRangeFormat().isPresent()) {
                     time_range_format = task.getTimeRangeFormat().get();
